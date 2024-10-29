@@ -194,25 +194,39 @@ class WebServer {
             builder.append("File not found: " + file);
           }
         } else if (request.contains("multiply?")) {
-          // This multiplies two numbers, there is NO error handling, so when
-          // wrong data is given this just crashes
+          Map<String, String> query_pairs = splitQuery(request.replace("multiply?", ""));
 
-          Map<String, String> query_pairs = new LinkedHashMap<String, String>();
-          // extract path parameters
-          query_pairs = splitQuery(request.replace("multiply?", ""));
+          try {
+            // For the case of missing arguments:
+            if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) {
+              builder.append("HTTP/1.1 400 Bad Request\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: you MUST enter a value for num1 and num2");
+            } else {
+              Integer num1 = Integer.parseInt(query_pairs.get("num1"));
+              Integer num2 = Integer.parseInt(query_pairs.get("num2"));
 
-          // extract required fields from parameters
-          Integer num1 = Integer.parseInt(query_pairs.get("num1"));
-          Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+              Integer result = num1 * num2;
 
-          // do math
-          Integer result = num1 * num2;
-
-          // Generate response
-          builder.append("HTTP/1.1 200 OK\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Result is: " + result);
+              builder.append("HTTP/1.1 200 OK\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Result: " + result);
+            }
+          } catch (NumberFormatException e) {
+            // When user tries to put in non-numbers:
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: num1 and num2 must be integers");
+          } catch (Exception e) {
+            // General unhandled exceptions:
+            builder.append("HTTP/1.1 500 Internal Server Error\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: an unhandled exception occurred");
+          }
 
           // TODO: Include error handling here with a correct error code and
           // a response that makes sense
@@ -225,20 +239,144 @@ class WebServer {
           //     then drill down to what you care about
           // "Owner's repo is named RepoName. Example: find RepoName's contributors" translates to
           //     "/repos/OWNERNAME/REPONAME/contributors"
+          Map<String, String> query_pairs = splitQuery(request.replace("github?", ""));
+          String apiEndpoint = query_pairs.get("query");
 
-          Map<String, String> query_pairs = new LinkedHashMap<String, String>();
-          query_pairs = splitQuery(request.replace("github?", ""));
-          String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
-          System.out.println(json);
+          if (apiEndpoint == null || apiEndpoint.isEmpty()) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: a query must be specified");
+          } else {
+            try {
+              String json = fetchURL("https://api.github.com/" + apiEndpoint);
 
-          builder.append("HTTP/1.1 200 OK\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Check the todos mentioned in the Java source file");
+              JSONArray repos = new JSONArray(json);
+              builder.append("HTTP/1.1 200 OK\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+
+              // full_name, ID, login:
+              for (int i = 0; i < repos.length(); i++) {
+                JSONObject repo = repos.getJSONObject(i);
+                String fullName = repo.getString("full_name");
+                int id = repo.getInt("id");
+                String ownerLogin = repo.getJSONObject("owner").getString("login");
+
+                builder.append("Repository: " + fullName + "<br>");
+                builder.append("ID: " + id + "<br>");
+                builder.append("Login: " + ownerLogin + "<br><br>");
+              }
+            } catch (JSONException e) {
+              builder.append("HTTP/1.1 500 Internal Server Error\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: failed to incur a response from GitHub");
+            } catch (IOException e) {
+              builder.append("HTTP/1.1 503 Service Unavailable\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: could not connect to GitHub. Check your network or try again later.");
+            } catch (Exception e) {
+              builder.append("HTTP/1.1 500 Internal Server Error\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: An unhandled exception occurred.");
+            }
+          }
+
+
+
           // TODO: Parse the JSON returned by your fetch and create an appropriate
-          // response based on what the assignment document asks for
+          // response based on what the assignment document asks for.
 
-        } else {
+          /**
+           * calculates the age based on the inputted birthYear and currentYear arguments
+           * @param birthYear = year user was born
+           * @param currentYear = current year, today
+           */
+        } else if (request.contains("calculateAge?")) {
+          Map<String, String> query_pairs = splitQuery(request.replace("calculateAge?", ""));
+
+          try {
+            // Check for missing parameters
+            if (!query_pairs.containsKey("birthYear") || !query_pairs.containsKey("currentYear")) {
+              builder.append("HTTP/1.1 400 Bad Request\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: Both the birth year and current year must be entered, separately");
+            } else {
+              int birthYear = Integer.parseInt(query_pairs.get("birthYear"));
+              int currentYear = Integer.parseInt(query_pairs.get("currentYear"));
+
+              if (currentYear < birthYear) {
+                builder.append("HTTP/1.1 400 Bad Request\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("Error: currentYear must be greater than birthYear");
+              } else {
+                int age = currentYear - birthYear;
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("Your age is: " + age + " years");
+              }
+            }
+          } catch (NumberFormatException e) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: both values must be integers");
+          } catch (Exception e) {
+            builder.append("HTTP/1.1 500 Internal Server Error\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: an unhandled exception occurred");
+          }
+
+          /**
+           * calculates the distance between two Cartesian points when their coordinates are input as arguments (x1, y1, x2, y2).
+           * @param x1, x2 = x-axis points
+           * @param y1, y2 = y-axis points
+           */
+        } else if (request.contains("calculateDistance?")) {
+          Map<String, String> query_pairs = splitQuery(request.replace("calculateDistance?", ""));
+
+          try {
+            // Check for missing parameters
+            if (!query_pairs.containsKey("x1") || !query_pairs.containsKey("y1") ||
+                    !query_pairs.containsKey("x2") || !query_pairs.containsKey("y2")) {
+              builder.append("HTTP/1.1 400 Bad Request\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: four inputs are required: x1, y1, x2, y2);
+            } else {
+              double x1 = Double.parseDouble(query_pairs.get("x1"));
+              double y1 = Double.parseDouble(query_pairs.get("y1"));
+              double x2 = Double.parseDouble(query_pairs.get("x2"));
+              double y2 = Double.parseDouble(query_pairs.get("y2"));
+
+              // Calculate the distance using the distance formula
+              double distance = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+
+              builder.append("HTTP/1.1 200 OK\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Distance: " + distance);
+            }
+          } catch (NumberFormatException e) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: x1, y1, x2, and y2 must be valid numbers");
+          } catch (Exception e) {
+            builder.append("HTTP/1.1 500 Internal Server Error\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: An unhandled exception occurred");
+          }
+
+      } else {
           // if the request is not recognized at all
 
           builder.append("HTTP/1.1 400 Bad Request\n");

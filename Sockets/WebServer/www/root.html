@@ -1,15 +1,33 @@
 <html>
-	<head>
-		<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
-	</head>
-	<body>
-		<h3>You can make the following GET requests<h3>
-		<ul>
-			<li>/file/sample.html -- returns the content of the file sample.html</li>
-			<li>/json -- returns a json of the /random request</a></li>
-			<li>/random -- returns index.html</a></li>
-		</ul>
-		<h3>File Structure in www (you can use /file/www/FILENAME):</h3>
-		${links}
-	</body>
+    <head>
+        <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+    </head>
+    <body>
+        <h3>You can make the following GET requests</h3>
+        <ul>
+            <li>/file/sample.html -- returns the content of the file sample.html<br>
+                <strong>Example:</strong> <code>http://98.82.7.191:9000/file/sample.html</code>
+            </li>
+            <li>/json -- returns a JSON response for a random image<br>
+                <strong>Example:</strong> <code>http://98.82.7.191:9000/json</code>
+            </li>
+            <li>/random -- returns index.html<br>
+                <strong>Example:</strong> <code>http://98.82.7.191:9000/random</code>
+            </li>
+            <li>/multiply?num1=3&num2=4 -- multiplies two numbers and returns the result<br>
+                <strong>Example:</strong> <code>http://98.82.7.191:9000/multiply?num1=3&num2=4</code>
+            </li>
+            <li>/github?query=users/amehlhase316/repos -- retrieves/displays details of the specified GitHub repositories<br>
+                <strong>Example:</strong> <code>http://98.82.7.191:9000/github?query=users/amehlhase316/repos</code>
+            </li>
+            <li>/calculateAge?birthYear=1990&currentYear=2024 -- calculates your age based on provided birth and current years<br>
+                <strong>Example:</strong> <code>http://98.82.7.191:9000/calculateAge?birthYear=1990&currentYear=2024</code>
+            </li>
+            <li>/calculateDistance?x1=1&y1=1&x2=4&y2=5 -- calculates the distance between two points on a plane<br>
+                <strong>Example:</strong> <code>http://98.82.7.191:9000/calculateDistance?x1=1&y1=1&x2=4&y2=5</code>
+            </li>
+        </ul>
+        <h3>File Structure in www (you can use /file/www/FILENAME):</h3>
+        ${links}
+    </body>
 </html>
