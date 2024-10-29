@@ -25,6 +25,9 @@ import java.util.Random;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.nio.charset.Charset;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONException;
 
 class WebServer {
   public static void main(String args[]) {
@@ -272,12 +275,7 @@ class WebServer {
               builder.append("Content-Type: text/html; charset=utf-8\n");
               builder.append("\n");
               builder.append("Error: failed to incur a response from GitHub");
-            } catch (IOException e) {
-              builder.append("HTTP/1.1 503 Service Unavailable\n");
-              builder.append("Content-Type: text/html; charset=utf-8\n");
-              builder.append("\n");
-              builder.append("Error: could not connect to GitHub. Check your network or try again later.");
-            } catch (Exception e) {
+            }  catch (Exception e) {
               builder.append("HTTP/1.1 500 Internal Server Error\n");
               builder.append("Content-Type: text/html; charset=utf-8\n");
               builder.append("\n");
@@ -349,7 +347,7 @@ class WebServer {
               builder.append("HTTP/1.1 400 Bad Request\n");
               builder.append("Content-Type: text/html; charset=utf-8\n");
               builder.append("\n");
-              builder.append("Error: four inputs are required: x1, y1, x2, y2);
+              builder.append("Error: four inputs are required: x1, y1, x2, y2");
             } else {
               double x1 = Double.parseDouble(query_pairs.get("x1"));
               double y1 = Double.parseDouble(query_pairs.get("y1"));
